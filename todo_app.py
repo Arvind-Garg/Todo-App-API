@@ -72,7 +72,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     """Get current user from the token"""
     token = credentials.credentials
     email = verify_token(token)
-    user = db.query(model.User).filter(User.email == email).first()
+    user = db.query(models.User).filter(models.User.email == email).first()
 
     if user is None:
         raise HTTPException(status=400, detail="User not found")
@@ -85,7 +85,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 def register(user_data = UserCreate, db: Session = Depends(get_db)):
     """Register New User"""
     #check existing user
-    existing_user = db.query(models.User).filter(email==user_data.email).first
+    existing_user = db.query(models.User).filter(models.User.email==user_data.email).first
     if existing_user:
         raise HTTPException (status_code = 400, detail = "Email already registered")
 
@@ -105,7 +105,7 @@ def register(user_data = UserCreate, db: Session = Depends(get_db)):
 def login(user_data = UserLogin ,db: Session = Depends(get_db)):
     """Existing User Login"""""
     #check if user email  is in databse
-    existing_email = db.query(Models.User).filter(models.User.email==user_data.email).first()
+    existing_email = db.query(models.User).filter(models.User.email==user_data.email).first()
     if not existing_email:
         raise HTTPException(status_code=401, detail ="Email is not registered")
 
@@ -209,7 +209,7 @@ def update_todo(todo_id: int, updates: TodoUpdate, current_user : models.User = 
 
 @app.delete("/todos/{todo_id}", response_model=Todo)
 def delete_todo(todo_id:int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_todo = db.query(models.Todo).filter(models.Todo.owner_id = current_user.id, models.Todo.id == todo_id).first()
+    db_todo = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id, models.Todo.id == todo_id).first()
     if db_todo is None:
         raise HTTPException(status_code=404, detail="Todo not found")
 
@@ -219,14 +219,14 @@ def delete_todo(todo_id:int, current_user: models.User = Depends(get_current_use
           
 # Get Complete todo
 @app.get("/todos/completed", response_model=List[Todo])
-def get_completed_todo(current_user = models.User= Depends(get_current_user), db: Session = Depends(get_db)):
+def get_completed_todo(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_todo = db.query(models.Todo).filter(models.Todo.owner_id==current.user.id, models.Todo.completed == True).all()
     return db_todo
 
 # Get Pending todo
 @app.get("/todos/pending", response_model=List[Todo])
 def get_pending_todos(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_todo = db.query(models.Todo).filter(models.Todo.owner_id = current_user.id, models.Todo.completed == False).all()
+    db_todo = db.query(models.Todo).filter(models.Todo.owner_id == current_user.id, models.Todo.completed == False).all()
     return db_todo
 
 # Mark a todo complete
