@@ -220,7 +220,7 @@ def delete_todo(todo_id:int, current_user: models.User = Depends(get_current_use
 # Get Complete todo
 @app.get("/todos/completed", response_model=List[Todo])
 def get_completed_todo(current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db_todo = db.query(models.Todo).filter(models.Todo.owner_id==current.user.id, models.Todo.completed == True).all()
+    db_todo = db.query(models.Todo).filter(models.Todo.owner_id==current_user.id, models.Todo.completed == True).all()
     return db_todo
 
 # Get Pending todo
@@ -232,7 +232,7 @@ def get_pending_todos(current_user: models.User = Depends(get_current_user), db:
 # Mark a todo complete
 
 @app.patch("/todos/{todo_id}/toggle", response_model=TodoToggle)
-def toggled(todo_id: int, currnet_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+def toggled(todo_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
     db_todo = db.query(models.Todo).filter(models.Todo.owner_id==current_user.id, models.Todo.id == todo_id).first()
     if db_todo is None:
         raise HTTPException(status_code=404, detail= "Todo not found")
@@ -253,7 +253,7 @@ def toggled(todo_id: int, currnet_user: models.User = Depends(get_current_user),
 
 @app.get("/stats")
 def todo_stats(current_user:models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    total = db.query(models.Todo).count()
+    total = db.query(models.Todo).filter(models.Todo.owner.id==current_user.id).count()
     completed = db.query(models.Todo).filter(models.Todo.owner_id==current_user.id, models.Todo.completed==True).count()
     pending = total - completed
     return {
