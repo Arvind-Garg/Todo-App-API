@@ -2,7 +2,7 @@
 # Copy this code, run it, and understand each part
 
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import List, Optional
 from datetime import datetime
 from database import engine
@@ -46,6 +46,7 @@ class TodoToggle(BaseModel):
     todo: Todo
 
 class UserCreate(BaseModel):
+    name: Optional[str] = None
     email: str
     password: str
 
@@ -54,9 +55,8 @@ class UserResponse(BaseModel):
     email: str
     is_active: bool
     created_at: datetime
-
-    class config:
-        from_atributes: True
+    
+    model_config = ConfigDict(from_attributes= True)
     
 class Token(BaseModel):
     access_token: str
@@ -82,16 +82,17 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 #Authentication Endpoints
 
 @app.post("/auth/register", response_model =UserResponse)
-def register(user_data = UserCreate, db: Session = Depends(get_db)):
+def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register New User"""
     #check existing user
-    existing_user = db.query(models.User).filter(models.User.email==user_data.email).first
+    existing_user = db.query(models.User).filter(models.User.email==user_data.email).first()
     if existing_user:
         raise HTTPException (status_code = 400, detail = "Email already registered")
 
     #create new user
-    hashed_password = get_password_hash(user_data.hash)
+    hashed_password = get_password_hash(user_data.password)
     new_user = models.User(
+        name = user_data.name,
         email = user_data.email,
         hashed_password = hashed_password
     )
@@ -102,21 +103,21 @@ def register(user_data = UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 @app.post("/auth/login", response_model=Token)
-def login(user_data = UserLogin ,db: Session = Depends(get_db)):
-    """Existing User Login"""""
+def login(user_data: UserLogin, db: Session = Depends(get_db)):
+    """Existing User Login"""
     #check if user email  is in databse
-    existing_email = db.query(models.User).filter(models.User.email==user_data.email).first()
+    user = db.query(models.User).filter(models.User.email==user_data.email).first()
     if not existing_email:
         raise HTTPException(status_code=401, detail ="Email is not registered")
 
     #if it is then verify password
-    if not verify_password(user_data.password==User.hashed_password):
+    if not verify_password(user_data.password,User.hashed_password):
         raise HTTPException (status_code=401, detail = "Incorrect Email or Password")
 
     
     #create token if email is in the database
      
-    new_token = create_access_token(
+    naccess_token = create_access_token(
         data = {sub: 'user_data.email'},
         expires_delta = timedelta(minutes=120)
     )
@@ -253,7 +254,7 @@ def toggled(todo_id: int, current_user: models.User = Depends(get_current_user),
 
 @app.get("/stats")
 def todo_stats(current_user:models.User = Depends(get_current_user), db: Session = Depends(get_db)):
-    total = db.query(models.Todo).filter(models.Todo.owner.id==current_user.id).count()
+    total = db.query(models.Todo).filter(models.Todo.owner_id==current_user.id).count()
     completed = db.query(models.Todo).filter(models.Todo.owner_id==current_user.id, models.Todo.completed==True).count()
     pending = total - completed
     return {
