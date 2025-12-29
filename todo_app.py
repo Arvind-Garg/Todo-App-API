@@ -51,6 +51,7 @@ class UserCreate(BaseModel):
     password: str
 
 class UserResponse(BaseModel):
+    name: Optional[str]
     id: int
     email: str
     is_active: bool
@@ -107,18 +108,18 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     """Existing User Login"""
     #check if user email  is in databse
     user = db.query(models.User).filter(models.User.email==user_data.email).first()
-    if not existing_email:
+    if not user:
         raise HTTPException(status_code=401, detail ="Email is not registered")
 
     #if it is then verify password
-    if not verify_password(user_data.password,User.hashed_password):
+    if not verify_password(user_data.password, user.hashed_password):
         raise HTTPException (status_code=401, detail = "Incorrect Email or Password")
 
     
     #create token if email is in the database
      
-    naccess_token = create_access_token(
-        data = {sub: 'user_data.email'},
+    access_token = create_access_token(
+        data = {"sub": user_data.email},
         expires_delta = timedelta(minutes=120)
     )
 
