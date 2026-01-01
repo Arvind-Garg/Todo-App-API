@@ -8,6 +8,7 @@ from datetime import datetime
 from database import engine
 from models import Base
 from sqlalchemy.orm import Session
+from sqlalchemy import update
 from database import get_db
 import models
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -239,7 +240,11 @@ def toggled(todo_id: int, current_user: models.User = Depends(get_current_user),
     if db_todo is None:
         raise HTTPException(status_code=404, detail= "Todo not found")
 
-    db_todo.completed = not db_todo.completed
+    db.execute(
+        update(models.Todo)
+        .where(models.Todo.id == todo_id)
+        .values(completed=~models.Todo.completed)
+    )
             
     db.commit()
     db.refresh(db_todo)
