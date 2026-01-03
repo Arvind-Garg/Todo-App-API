@@ -10,7 +10,12 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL")
 
 #Create databse engine(the connection manager)
-engine = create_engine(DATABASE_URL)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=5,
+    max_overflow=10,
+    pool_timeout=30
+    )
 
 #Create Session factory (for talking to database)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
