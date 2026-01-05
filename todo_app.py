@@ -48,8 +48,8 @@ class TodoToggle(BaseModel):
 
 class UserCreate(BaseModel):
     name: Optional[str] = None
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(min_length=8, description="Must be at least 8 characters")
 
 class UserResponse(BaseModel):
     name: Optional[str]
