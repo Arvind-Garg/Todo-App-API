@@ -2,7 +2,7 @@
 # Copy this code, run it, and understand each part
 
 from fastapi import FastAPI, HTTPException, Depends
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from typing import List, Optional
 from datetime import datetime
 from database import engine
